@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Multiple Resumes{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-upload me-2"></i>Upload Multiple Resumes for Ranking
+                </h4>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" method="POST" enctype="multipart/form-data">
+                    <!-- Job Description -->
+                    <div class="mb-4">
+                        <label for="job_description" class="form-label">
+                            <i class="fas fa-briefcase me-2"></i>Job Description *
+                        </label>
+                        <textarea
+                            class="form-control"
+                            id="job_description"
+                            name="job_description"
+                            rows="8"
+                            placeholder="Enter detailed job description including required skills, experience, qualifications, and responsibilities..."
+                            required>{{ request.form.get('job_description', '') }}</textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            The more detailed your job description, the more accurate the ranking will be.
+                        </div>
+                    </div>
+
+                    <!-- Multiple File Upload -->
+                    <div class="mb-4">
+                        <label for="resumes" class="form-label">
+                            <i class="fas fa-file-pdf me-2"></i>Resume Files (Select Multiple) *
+                        </label>
+                        <input
+                            class="form-control form-control-lg"
+                            type="file"
+                            id="resumes"
+                            name="resumes"
+                            multiple
+                            accept=".pdf,.docx,.txt"
+                            required>
+                        <div class="form-text">
+                            <strong>📁 How to select multiple files:</strong><br>
+                            • <kbd>Ctrl + Click</kbd> (Windows) or <kbd>Cmd + Click</kbd> (Mac) to select multiple files<br>
+                            • Supported formats: PDF, DOCX, TXT<br>
+                            • Maximum file size: 16MB each<br>
+                            • Recommended: 5-20 resumes for best comparison
+                        </div>
+                    </div>
+
+                    <!-- File List Display -->
+                    <div id="fileList" class="mb-3"></div>
+
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success btn-lg" id="submitBtn">
+                            <i class="fas fa-chart-line me-2"></i>Rank All Resumes by Percentage Match
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Instructions Card -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-question-circle me-2"></i>How It Works</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-upload text-primary me-2"></i>1. Upload Process</h6>
+                        <ul class="small">
+                            <li>Select multiple resume files at once</li>
+                            <li>System extracts text from each file</li>
+                            <li>AI processes and analyzes content</li>
+                        </ul>
+
+                        <h6><i class="fas fa-brain text-success me-2"></i>2. AI Analysis</h6>
+                        <ul class="small">
+                            <li>Compares each resume to job description</li>
+                            <li>Uses machine learning algorithms</li>
+                            <li>Calculates percentage match scores</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-sort-amount-down text-warning me-2"></i>3. Ranking Results</h6>
+                        <ul class="small">
+                            <li>All resumes ranked by match percentage</li>
+                            <li>Best matches shown first</li>
+                            <li>Skills and qualifications highlighted</li>
+                        </ul>
+
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-lightbulb me-2"></i>
+                            <strong>Pro Tip:</strong> Include specific skills, experience levels, and requirements in your job description for more accurate rankings.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('resumes');
+    const fileList = document.getElementById('fileList');
+    const submitBtn = document.getElementById('submitBtn');
+
+    fileInput.addEventListener('change', function() {
+        displaySelectedFiles();
+    });
+
+    function displaySelectedFiles() {
+        const files = fileInput.files;
+        fileList.innerHTML = '';
+
+        if (files.length > 0) {
+            // Success alert
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success';
+            alert.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>
+                <strong>${files.length} resume${files.length > 1 ? 's' : ''} selected for ranking:</strong>
+            `;
+            fileList.appendChild(alert);
+
+            // File list
+            const listGroup = document.createElement('div');
+            listGroup.className = 'list-group mb-3';
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const listItem = document.createElement('div');
+                listItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+
+                const fileInfo = document.createElement('div');
+                fileInfo.innerHTML = `
+                    <i class="fas fa-file-${getFileIcon(file.name)} me-2 text-primary"></i>
+                    <strong>${file.name}</strong>
+                    <small class="text-muted ms-2">(${formatFileSize(file.size)})</small>
+                `;
+
+                const status = document.createElement('span');
+                status.className = 'badge bg-success';
+                status.innerHTML = '<i class="fas fa-check me-1"></i>Ready';
+
+                listItem.appendChild(fileInfo);
+                listItem.appendChild(status);
+                listGroup.appendChild(listItem);
+            }
+
+            fileList.appendChild(listGroup);
+
+            // Update button
+            submitBtn.innerHTML = `<i class="fas fa-chart-line me-2"></i>Rank ${files.length} Resume${files.length > 1 ? 's' : ''} by Percentage`;
+        } else {
+            submitBtn.innerHTML = '<i class="fas fa-chart-line me-2"></i>Rank All Resumes by Percentage Match';
+        }
+    }
+
+    function getFileIcon(filename) {
+        const ext = filename.split('.').pop().toLowerCase();
+        switch (ext) {
+            case 'pdf': return 'pdf';
+            case 'docx':
+            case 'doc': return 'word';
+            case 'txt': return 'alt';
+            default: return 'file';
+        }
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+});
+</script>
+{% endblock %}

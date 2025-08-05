@@ -1,0 +1,76 @@
+/* --- Hacker Theme --------------------------------------------------- */
+
+/* Colours */
+:root {
+    --neon: #00ff9c;
+    --bg:   #020b0d;
+    --fg:   #e0ffe5;
+}
+
+/* Global */
+body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: "Fira Code", "Consolas", monospace;
+    letter-spacing: 0.3px;
+}
+
+/* Neon utility */
+.text-neon   { color: var(--neon) !important; }
+.border-neon { border-color: var(--neon) !important; }
+
+/* Navbar */
+.navbar { background: rgba(0, 0, 0, 0.6); }
+.nav-link:hover,
+.navbar-brand:hover { text-shadow: 0 0 6px var(--neon); }
+
+/* Buttons & links */
+.btn, .nav-link {
+    transition: all 0.15s linear;
+}
+.btn-primary {
+    background: transparent;
+    border: 1px solid var(--neon);
+    color: var(--neon);
+}
+.btn-primary:hover {
+    background: var(--neon);
+    color: #000;
+}
+
+/* Alerts */
+.hacker-alert {
+    background: rgba(0, 255, 156, 0.1);
+    border: 1px solid var(--neon);
+    color: var(--neon);
+}
+
+/* Tables & cards (optional) */
+.table, .card {
+    background: rgba(2, 11, 13, 0.6);
+    color: var(--fg);
+    border: 1px solid var(--neon);
+}
+.table thead { background: rgba(0, 255, 156, 0.15); }
+
+/* Scan-line overlay */
+.scanlines {
+    position: fixed;
+    pointer-events: none;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: repeating-linear-gradient(
+        to bottom,
+        transparent 0,
+        rgba(0,255,156,0.03) 1px,
+        transparent 2px
+    );
+    mix-blend-mode: overlay;
+    z-index: 1000;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb {
+    background: var(--neon);
+    border-radius: 10px;
+}

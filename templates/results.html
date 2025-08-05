@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Resume Ranking Results{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-trophy me-2 text-warning"></i>Resume Ranking Results</h2>
+            <div>
+                <a href="{{ url_for('upload_resumes') }}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>Upload More
+                </a>
+                <button onclick="exportResults()" class="btn btn-success">
+                    <i class="fas fa-download me-2"></i>Export CSV
+                </button>
+            </div>
+        </div>
+
+        <!-- Summary Stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white text-center">
+                    <div class="card-body py-3">
+                        <h3 class="mb-1">{{ total_resumes }}</h3>
+                        <small>Total Resumes</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white text-center">
+                    <div class="card-body py-3">
+                        <h3 class="mb-1">{{ results[0].percentage_match if results else 0 }}%</h3>
+                        <small>Highest Match</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-info text-white text-center">
+                    <div class="card-body py-3">
+                        <h3 class="mb-1">{{ ((results|map(attribute='percentage_match')|sum) / results|length)|round(1) if results else 0 }}%</h3>
+                        <small>Average Match</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white text-center">
+                    <div class="card-body py-3">
+                        <h3 class="mb-1">{{ results|selectattr('percentage_match', '>=', 70)|list|length }}</h3>
+                        <small>Strong Matches (70%+)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Table -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-list-ol me-2"></i>Ranked by Percentage Match (Highest First)
+                </h5>
+                <small class="text-muted">{{ results|length }} results</small>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" id="resultsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th width="8%">Rank</th>
+                                <th width="25%">Resume File</th>
+                                <th width="20%">Match Percentage</th>
+                                <th width="12%">Skills Count</th>
+                                <th width="35%">Key Skills Found</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for result in results %}
+                            <tr class="
+                                {% if result.percentage_match >= 80 %}table-success
+                                {% elif result.percentage_match >= 60 %}table-warning
+                                {% elif result.percentage_match >= 40 %}table-info
+                                {% endif %}">
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        {% if result.rank == 1 %}
+                                            <i class="fas fa-trophy text-warning me-2 fs-5"></i>
+                                        {% elif result.rank == 2 %}
+                                            <i class="fas fa-medal text-secondary me-2"></i>
+                                        {% elif result.rank == 3 %}
+                                            <i class="fas fa-medal text-warning me-2"></i>
+                                        {% else %}
+                                            <i class="fas fa-circle text-muted me-2"></i>
+                                        {% endif %}
+                                        <strong class="fs-5">#{{ result.rank }}</strong>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div>
+                                        <strong class="text-primary">{{ result.filename }}</strong>
+                                        <br>
+                                        <small class="text-muted">ID: {{ result.resume_id }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="mb-2">
+                                        <div class="progress" style="height: 25px;">
+                                            <div class="progress-bar
+                                                {% if result.percentage_match >= 80 %}bg-success
+                                                {% elif result.percentage_match >= 60 %}bg-warning
+                                                {% elif result.percentage_match >= 40 %}bg-info
+                                                {% else %}bg-secondary{% endif %}"
+                                                style="width: {{ result.percentage_match }}%">
+                                                <strong>{{ result.percentage_match }}%</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="text-center">
+                                        <span class="badge
+                                            {% if result.percentage_match >= 80 %}bg-success
+                                            {% elif result.percentage_match >= 60 %}bg-warning
+                                            {% elif result.percentage_match >= 40 %}bg-info
+                                            {% else %}bg-secondary{% endif %} fs-6">
+                                            {{ result.percentage_match }}% Match
+                                        </span>
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary fs-6">{{ result.skill_count }}</span>
+                                    <br>
+                                    <small class="text-muted">skills</small>
+                                </td>
+                                <td>
+                                    {% if result.skills %}
+                                        <div class="skills-container">
+                                            {% for skill in result.skills[:6] %}
+                                                <span class="badge bg-light text-dark me-1 mb-1">{{ skill }}</span>
+                                            {% endfor %}
+                                            {% if result.skills|length > 6 %}
+                                                <br><small class="text-muted">
+                                                    <i class="fas fa-plus-circle me-1"></i>
+                                                    {{ result.skills|length - 6 }} more skills
+                                                </small>
+                                            {% endif %}
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">
+                                            <i class="fas fa-exclamation-triangle me-1"></i>
+                                            No specific skills detected
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        {% if not results %}
+        <div class="text-center py-5">
+            <i class="fas fa-exclamation-triangle fa-3x text-warning mb-3"></i>
+            <h4>No Ranking Results</h4>
+            <p class="text-muted">No resumes were successfully processed and ranked.</p>
+            <a href="{{ url_for('upload_resumes') }}" class="btn btn-primary">
+                <i class="fas fa-upload me-2"></i>Try Again
+            </a>
+        </div>
+        {% endif %}
+
+        <!-- Action Buttons -->
+        <div class="mt-4 text-center">
+            <a href="{{ url_for('upload_resumes') }}" class="btn btn-primary btn-lg me-3">
+                <i class="fas fa-plus me-2"></i>Upload More Resumes
+            </a>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary btn-lg">
+                <i class="fas fa-home me-2"></i>Back to Home
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Export functionality
+function exportResults() {
+    const results = [
+        {% for result in results %}
+        {
+            rank: {{ result.rank }},
+            filename: "{{ result.filename }}",
+            percentage_match: {{ result.percentage_match }},
+            skill_count: {{ result.skill_count }},
+            skills: {{ result.skills|tojson|safe }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+    ];
+
+    // Create CSV content
+    let csvContent = "Rank,Filename,Match Percentage,Skills Count,Skills\n";
+
+    results.forEach(result => {
+        const skillsStr = result.skills.join('; ');
+        csvContent += `${result.rank},"${result.filename}",${result.percentage_match},${result.skill_count},"${skillsStr}"\n`;
+    });
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = 'resume_ranking_results.csv';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    const tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+</script>
+{% endblock %}
